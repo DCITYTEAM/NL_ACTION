@@ -1,0 +1,53 @@
+name: NL随机分配
+
+on:
+  workflow_dispatch:  # 允许手动触发工作流
+
+jobs:
+  distribute_nl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v2
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: 运行NL分配脚本
+        run: |
+          python - <<EOF
+          import random
+
+          # 读取input.txt文件中的用户名
+          with open('input.txt', 'r') as f:
+              usernames = [line.strip() for line in f if line.strip()]
+
+          total_nl = 1145  # 总共要分配的NL数量
+          remaining_nl = total_nl
+          allocated_nl = {}
+
+          # 为每个用户随机分配NL
+          for i, username in enumerate(usernames):
+              if i == len(usernames) - 1:
+                  # 最后一个用户获得剩余的所有NL
+                  nl = remaining_nl
+              else:
+                  # 随机分配NL，确保至少分配1个
+                  max_nl = min(remaining_nl - (len(usernames) - i - 1), remaining_nl // 2)
+                  nl = random.randint(1, max_nl)
+              
+              allocated_nl[username] = nl
+              remaining_nl -= nl
+
+          # 输出分配结果
+          for username, nl in allocated_nl.items():
+              print(f"{username} - {nl}NL")
+
+          # 验证总和
+          total_allocated = sum(allocated_nl.values())
+          print(f"\n总共分配的NL: {total_allocated}")
+          print(f"剩余的NL: {total_nl - total_allocated}")
+          EOF
+
